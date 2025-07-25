@@ -4,7 +4,8 @@ SQLAlchemy==1.4.46
 Flask-SQLAlchemy==2.5.1
 pymysql==1.0.3
 google-auth==2.17.3
-google-api-python-client==2.86.0
+google-api-python-client>=2.84.0  # 确保支持新特性，避免兼容性问题
+google-api-core>=2.11.0  # 支持新的异常类型
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==1.0.0
 python-dotenv==1.0.0
