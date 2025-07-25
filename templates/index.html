@@ -1,0 +1,540 @@
+<!-- templates/index.html - 结构优化版 -->
+{% extends 'base.html' %}
+
+{% block title %}GCP 账单管理 - 服务账号列表{% endblock %}
+
+{% block content %}
+<!-- 第一部分：系统概览区域 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex align-items-center">
+                <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+                <h4 class="mb-0">系统概览</h4>
+            </div>
+            <div class="card-body">
+                <!-- 统计卡片 -->
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card account-card" onclick="showServiceAccounts()">
+                            <div class="icon">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                            <h5 class="card-title" id="service-account-count">0</h5>
+                            <p class="card-text">服务账号</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card project-card" onclick="showProjects()">
+                            <div class="icon">
+                                <i class="bi bi-boxes"></i>
+                            </div>
+                            <h5 class="card-title" id="project-count">0</h5>
+                            <p class="card-text">项目数量</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card active-billing-card" onclick="showActiveBillings()">
+                            <div class="icon">
+                                <i class="bi bi-credit-card-2-front"></i>
+                            </div>
+                            <h5 class="card-title" id="active-billing-count">0</h5>
+                            <p class="card-text">活跃账单</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="stat-card inactive-billing-card" onclick="showInactiveBillings()">
+                            <div class="icon">
+                                <i class="bi bi-credit-card-2-front-fill"></i>
+                            </div>
+                            <h5 class="card-title" id="inactive-billing-count">0</h5>
+                            <p class="card-text">失效账单</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 第二部分：表格区域（提升到更重要的位置） -->
+<!-- 服务账号列表区域 -->
+<div class="row" id="service-accounts-section">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-person-badge me-2"></i>
+                    <h4 class="mb-0">服务账号列表</h4>
+                </div>
+                <div>
+                    <button class="btn btn-light btn-sm" id="refresh-accounts-btn">
+                        <i class="bi bi-arrow-clockwise me-1"></i>刷新列表
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-person me-1"></i>名称</th>
+                                <th><i class="bi bi-envelope me-1"></i>邮箱</th>
+                                <th><i class="bi bi-boxes me-1"></i>项目数量</th>
+                                <th><i class="bi bi-credit-card-2-front me-1"></i>活跃账单</th>
+                                <th><i class="bi bi-credit-card-2-front-fill me-1"></i>失效账单</th>
+                                <th><i class="bi bi-gear me-1"></i>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="service-accounts-list">
+                            <!-- 服务账号列表将通过JavaScript加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 项目列表区域 -->
+<div class="row" id="projects-section" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-boxes me-2"></i>
+                    <h4 class="mb-0">项目列表</h4>
+                </div>
+                <button class="btn btn-light btn-sm" onclick="showServiceAccounts()">
+                    <i class="bi bi-arrow-left me-1"></i>返回服务账号列表
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3 w-50">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="project-search" placeholder="搜索项目...">
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-box me-1"></i>项目ID</th>
+                                <th><i class="bi bi-credit-card me-1"></i>账单ID</th>
+                                <th><i class="bi bi-tag me-1"></i>账单名称</th>
+                                <th><i class="bi bi-check-circle me-1"></i>账单状态</th>
+                                <th><i class="bi bi-clock-history me-1"></i>最后更新</th>
+                                <th><i class="bi bi-gear me-1"></i>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-list">
+                            <!-- 项目列表将通过JavaScript加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 第三部分：最近操作和图表区域 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex align-items-center">
+                <i class="bi bi-activity me-2"></i>
+                <h4 class="mb-0">系统活动</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="recent-operations-title">
+                            <i class="bi bi-activity me-2"></i>最近操作
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th><i class="bi bi-gear-fill me-1"></i>操作类型</th>
+                                        <th><i class="bi bi-box me-1"></i>项目/账单</th>
+                                        <th><i class="bi bi-check-circle me-1"></i>状态</th>
+                                        <th><i class="bi bi-clock me-1"></i>时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-operations">
+                                    <!-- 最近操作将通过JavaScript加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="chart-container">
+                            <h5 class="text-center mb-3">账单状态分布</h5>
+                            <canvas id="billing-chart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 活跃账单区域 -->
+<div class="row" id="active-billings-section" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-credit-card-2-front me-2"></i>
+                    <h4 class="mb-0">活跃账单列表</h4>
+                </div>
+                <button class="btn btn-light btn-sm" onclick="showServiceAccounts()">
+                    <i class="bi bi-arrow-left me-1"></i>返回服务账号列表
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-credit-card me-1"></i>账单ID</th>
+                                <th><i class="bi bi-tag me-1"></i>账单名称</th>
+                                <th><i class="bi bi-check-circle me-1"></i>使用状态</th>
+                                <th><i class="bi bi-clock-history me-1"></i>最后更新</th>
+                            </tr>
+                        </thead>
+                        <tbody id="active-billings-list">
+                            <!-- 活跃账单列表将通过JavaScript加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 失效账单区域 -->
+<div class="row" id="inactive-billings-section" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-credit-card-2-front-fill me-2"></i>
+                    <h4 class="mb-0">失效账单列表</h4>
+                </div>
+                <button class="btn btn-light btn-sm" onclick="showServiceAccounts()">
+                    <i class="bi bi-arrow-left me-1"></i>返回服务账号列表
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-credit-card me-1"></i>账单ID</th>
+                                <th><i class="bi bi-tag me-1"></i>账单名称</th>
+                                <th><i class="bi bi-check-circle me-1"></i>使用状态</th>
+                                <th><i class="bi bi-clock-history me-1"></i>最后更新</th>
+                                <th><i class="bi bi-gear me-1"></i>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inactive-billings-list">
+                            <!-- 失效账单列表将通过JavaScript加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 确认对话框 -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalTitle">确认操作</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalBody">
+                您确定要执行此操作吗？
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmModalButton">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+      
+{% block scripts %}
+<script>
+let confirmModal = null;
+let confirmCallback = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化确认对话框
+    confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    
+    // 加载系统状态
+    loadSystemStatus();
+    
+    // 加载服务账号列表
+    loadServiceAccounts();
+    
+    // 刷新数据按钮
+    if (document.getElementById('refresh-data')) {
+        document.getElementById('refresh-data').addEventListener('click', function() {
+            loadSystemStatus();
+            loadServiceAccounts();
+        });
+    }
+});
+
+// 显示服务账号列表（默认视图）
+function showServiceAccounts() {
+    document.getElementById('service-accounts-section').style.display = 'flex';
+    document.getElementById('projects-section').style.display = 'none';
+    document.getElementById('active-billings-section').style.display = 'none';
+    document.getElementById('inactive-billings-section').style.display = 'none';
+}
+
+// 显示项目列表
+function showProjects() {
+    document.getElementById('service-accounts-section').style.display = 'none';
+    document.getElementById('projects-section').style.display = 'flex';
+    document.getElementById('active-billings-section').style.display = 'none';
+    document.getElementById('inactive-billings-section').style.display = 'none';
+    
+    // 加载所有项目
+    loadAllProjects();
+}
+
+// 显示活跃账单
+function showActiveBillings() {
+    document.getElementById('service-accounts-section').style.display = 'none';
+    document.getElementById('projects-section').style.display = 'none';
+    document.getElementById('active-billings-section').style.display = 'flex';
+    document.getElementById('inactive-billings-section').style.display = 'none';
+    
+    // 加载活跃账单
+    loadActiveBillings();
+}
+
+// 显示失效账单
+function showInactiveBillings() {
+    document.getElementById('service-accounts-section').style.display = 'none';
+    document.getElementById('projects-section').style.display = 'none';
+    document.getElementById('active-billings-section').style.display = 'none';
+    document.getElementById('inactive-billings-section').style.display = 'flex';
+    
+    // 加载失效账单
+    loadInactiveBillings();
+}
+
+// 加载所有项目
+function loadAllProjects() {
+    axios.get('/api/projects')
+        .then(function(response) {
+            if (response.data.status === 'success') {
+                const projects = response.data.data;
+                const projectsList = document.getElementById('projects-list');
+                projectsList.innerHTML = '';
+                
+                projects.forEach(function(project) {
+                    const row = document.createElement('tr');
+                    row.dataset.projectId = project.project_id;  // 使用dataset存储ID，方便操作
+                    
+                    // 根据账单状态设置行样式
+                    if (!project.billing_account_id) {
+                        row.classList.add('table-danger');
+                    }
+                    
+                    // 设置账单状态样式
+                    const statusClass = project.billing_account_id ? 'status-valid' : 'status-invalid';
+                    const statusText = project.billing_account_id ? '有效' : '无账单';
+                    
+                    row.innerHTML = `
+                        <td>${project.project_id}</td>
+                        <td>${project.billing_account_id || '无'}</td>
+                        <td>${project.billing_account_display_name || '无'}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td>${formatDate(project.updated_at)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="confirmRemoveProjectPermission('${project.project_id}', ${project.service_account_id})">
+                                解除权限
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDeleteProject('${project.project_id}', ${project.service_account_id})">
+                                删除记录
+                            </button>
+                        </td>
+                    `;
+                    
+                    projectsList.appendChild(row);
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('加载项目列表失败:', error);
+        });
+}
+
+// 确认解除项目权限
+function confirmRemoveProjectPermission(projectId, serviceAccountId) {
+    document.getElementById('confirmModalTitle').textContent = '确认解除项目权限';
+    document.getElementById('confirmModalBody').textContent = 
+        `确定要解除服务账号对项目 ${projectId} 的管理员权限吗？此操作将影响GCP中的实际权限配置。`;
+    
+    confirmCallback = function() {
+        removeProjectPermission(projectId, serviceAccountId);
+    };
+    
+    // 显示确认对话框
+    confirmModal.show();
+    
+    // 设置确认按钮的点击事件
+    document.getElementById('confirmModalButton').onclick = function() {
+        confirmCallback();
+        confirmModal.hide();
+    };
+}
+
+// 确认删除项目记录
+function confirmDeleteProject(projectId, serviceAccountId) {
+    document.getElementById('confirmModalTitle').textContent = '确认删除';
+    document.getElementById('confirmModalBody').textContent = 
+        `确定要删除项目 ${projectId} 的记录吗？注意：删除前必须先解除服务账号对该项目的管理员权限。`;
+    
+    confirmCallback = function() {
+        deleteProjectRecord(projectId, serviceAccountId);
+    };
+    
+    // 显示确认对话框
+    confirmModal.show();
+    
+    // 设置确认按钮的点击事件
+    document.getElementById('confirmModalButton').onclick = function() {
+        confirmCallback();
+        confirmModal.hide();
+    };
+}
+
+// 执行解除项目权限
+function removeProjectPermission(projectId, serviceAccountId) {
+    axios.delete(`/api/projects/${projectId}/admin-rights?service_account_id=${serviceAccountId}`)
+        .then(function(response) {
+            if (response.data.status === 'success') {
+                // 显示成功消息
+                alert('项目权限已成功解除');
+                
+                // 重新加载系统状态（更新最近操作记录）
+                loadSystemStatus();
+            } else {
+                alert('解除权限失败: ' + response.data.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('解除项目权限失败:', error);
+            alert('解除权限失败: ' + (error.response?.data?.message || error.message));
+        });
+}
+
+// 执行删除项目记录
+function deleteProjectRecord(projectId, serviceAccountId) {
+    axios.delete(`/api/projects/${projectId}?service_account_id=${serviceAccountId}`)
+        .then(function(response) {
+            if (response.data.status === 'success') {
+                // 直接从DOM中移除对应的行
+                const row = document.querySelector(`#projects-list tr[data-project-id="${projectId}"]`);
+                if (row) {
+                    row.remove();
+                }
+                
+                // 更新计数
+                const projectCount = document.getElementById('project-count');
+                if (projectCount) {
+                    const currentCount = parseInt(projectCount.textContent, 10);
+                    projectCount.textContent = currentCount - 1;
+                }
+                
+                // 显示成功消息
+                alert('项目记录已成功删除');
+                
+                // 重新加载系统状态
+                loadSystemStatus();
+            } else {
+                alert('删除失败: ' + response.data.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('删除项目记录失败:', error);
+            alert('删除失败: ' + (error.response?.data?.message || error.message));
+        });
+}
+
+// 确认移除账单权限
+function confirmRemovePermission(billingId, serviceAccountId) {
+    document.getElementById('confirmModalTitle').textContent = '确认移除权限';
+    document.getElementById('confirmModalBody').textContent = 
+        `确定要移除此账单 ${billingId} 的管理权限吗？这将影响GCP中的实际权限配置。`;
+    
+    confirmCallback = function() {
+        removePermission(billingId, serviceAccountId);
+    };
+    
+    // 显示确认对话框
+    confirmModal.show();
+    
+    // 设置确认按钮的点击事件
+    document.getElementById('confirmModalButton').onclick = function() {
+        confirmCallback();
+        confirmModal.hide();
+    };
+}
+
+// 移除账单权限
+function removePermission(billingId, serviceAccountId) {
+    axios.delete(`/api/billing-accounts/${billingId}/admin-rights?service_account_id=${serviceAccountId}`)
+        .then(function(response) {
+            if (response.data.status === 'success') {
+                alert('权限移除成功');
+                loadInactiveBillings(); // 刷新列表
+                loadSystemStatus(); // 更新状态
+            } else {
+                alert('操作失败: ' + response.data.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('移除权限失败:', error);
+            alert('操作失败: ' + (error.response?.data?.message || error.message));
+        });
+}
+
+// 格式化操作类型
+function formatOperationType(type) {
+    const types = {
+        'update': '更新账单',
+        'unbind': '解绑账单',
+        'remove_permission': '移除账单权限',
+        'remove_project_permission': '移除项目权限',
+        'delete_project': '删除项目',
+        'delete_billing': '删除账单'
+    };
+    
+    return types[type] || type;
+}
+
+// 格式化日期
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+</script>
+{% endblock %}

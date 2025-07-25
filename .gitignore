@@ -1,0 +1,19 @@
+# 敏感文件和文件夹 - 不可泄露
+credentials/
+mysql_data/
+.env
+
+# Python 缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE 配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db

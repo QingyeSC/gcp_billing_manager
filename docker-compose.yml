@@ -1,0 +1,49 @@
+services:
+  gcp-billing-app:
+    container_name: gcp-billing-app
+    build: .
+    ports:
+      - "8838:8848"
+    volumes:
+      # 统一使用绝对路径或相对路径，确保顺序一致
+      - ./credentials:/app/credentials:ro
+      - ./.env:/app/.env:ro
+    environment:
+      MYSQL_USER: billing_manager
+      MYSQL_PASSWORD: billing_password
+      MYSQL_HOST: gcp-billing-db          # 与下方 container_name 对齐
+      MYSQL_DB: gcp_billing
+    depends_on:
+      - gcp-billing-db
+    restart: always
+
+    # 日志轮转：单文件 10 MB，最多保留 3 个
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  gcp-billing-db:
+    container_name: gcp-billing-db
+    image: mysql:8.0
+    ports:
+      - "3206:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: gcp_billing
+      MYSQL_USER: billing_manager
+      MYSQL_PASSWORD: billing_password
+    volumes:
+      # 修改为绑定挂载，数据将存储在当前目录下的mysql_data文件夹中
+      - ./mysql_data:/var/lib/mysql
+    restart: always
+
+    # 同样加日志限制，MySQL 出问题也不怕磁盘打爆
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500m"
+        max-file: "3"
+
+# 删除volumes部分，因为我们不再使用Docker管理的卷
